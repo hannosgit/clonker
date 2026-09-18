@@ -44,6 +44,14 @@ func _physics_process(delta: float) -> void:
 	if Input.is_action_just_released("jump") and velocity.y < -160.0:
 		velocity.y *= 0.55
 
+	# The cell terrain has 8 px ledges. Step over one cell while grounded.
+	if is_on_floor() and not is_zero_approx(direction):
+		var ahead := Vector2(direction * 8.0, 0)
+		if test_move(transform, ahead) and not test_move(transform, Vector2.UP * 9.0):
+			var raised := Transform2D(global_rotation, global_position + Vector2.UP * 9.0)
+			if not test_move(raised, ahead):
+				global_position.y -= 9.0
+
 	move_and_slide()
 	if not is_zero_approx(direction):
 		_visual.scale.x = signf(direction)

@@ -1,28 +1,45 @@
-# Clonker character sandbox
+# Clonker terrain sandbox
 
-This is milestone 1 of the [implementation plan](specs/IMPLEMENTATION_PLAN.md): a playable 2D movement and collision sandbox built with **Godot 4.4.1** (official build `49a5bc7b6`). Open `project.godot` in Godot 4.4.1 and press **F6** with `scenes/sandbox.tscn` open, or press **F5** to run the project. From a terminal, run `godot --path .` with Godot 4.4.1 on your path.
+Milestone 2 of the [implementation plan](specs/IMPLEMENTATION_PLAN.md) is a playable destructible-terrain sandbox. It uses Godot **4.4.1** (official build `49a5bc7b6`). Open `project.godot` and press F5, or run `godot --path .`.
 
-Milestone files: `project.godot` defines the project and Input Map; `scenes/` holds the playable sandbox, character, world, and overlay; `scripts/` holds their behavior; `tests/sandbox_smoke.gd` verifies gameplay; `data/` and `assets/` are reserved for later content. This README and the milestone checklist record the implementation and verification.
-
-| Action | Default keys |
+| Action | Default input |
 | --- | --- |
-| Move | A / D or Left / Right |
-| Jump | Space, W, or Up (hold for a higher jump) |
-| Reset to start | R |
+| Move | A/D or Left/Right |
+| Jump | Space, W, or Up |
+| Dig | Hold left mouse button |
+| Paint earth | Hold right mouse button |
+| Paint rock | Shift + right mouse button |
+| Change brush radius | Mouse wheel, 8–80 px |
+| Reset character | R |
 
-The course has a flat starting area, a climbable slope, raised platforms, a wall, and a pit. The character respawns automatically after falling below the course. The overlay shows FPS and the controls.
+The brush is a debug world-editing tool; tool reach, mining yield, inventory, and material resistance effects arrive in later milestones. The character can walk, jump, dig through the ground, and enter tunnels. Painting occupied cells is rejected so the brush cannot embed the character.
 
-## Architecture
+## Files and architecture
 
-- `scenes/sandbox.tscn` and `scripts/game_session.gd` own the session, spawn point, and reset behavior.
-- `scenes/sandbox_world.tscn` and `scripts/sandbox_world.gd` define temporary static world geometry.
-- `scenes/character.tscn` and `scripts/character_controller.gd` own physics movement and camera follow. The controller queries only Godot collision; it has no reference to the temporary world.
-- `scenes/debug_overlay.tscn` and `scripts/debug_overlay.gd` own the FPS presentation.
+- `data/materials.json` defines stable IDs 0/1/2 for sky, earth, and rock. Every entry has solidity, density, dig and blast resistance, value, color, and optional liquid and temperature fields. `scripts/material_catalog.gd` loads these definitions.
+- `scenes/sandbox_world.tscn` and `scripts/sandbox_world.gd` own the authoritative terrain cells, rendering, collision, edit API, and rebuild statistics. The old hand-built terrain has been replaced.
+- `scenes/sandbox.tscn` and `scripts/game_session.gd` own the playable session, mouse brush, spawn, and reset. `scripts/character_controller.gd` uses regular physics collision and a grounded 8 px step to traverse cell-sized slope ledges. It never queries a terrain node.
+- `scenes/debug_overlay.tscn` and `scripts/debug_overlay.gd` display FPS, chunk count, pending dirty chunks, last rebuild time, and controls.
+- `tests/sandbox_smoke.gd` replays movement from milestone 1. `tests/terrain_smoke.gd` checks edits, material accounting, dirty rebuilds, collision, seam traversal, and a narrow rock passage. `tests/terrain_benchmark.gd` measures repeated edits in a 1920×1080 window.
 
-Movement and jump are Input Map actions in `project.godot`, so their bindings can be changed in the Godot editor now and exposed in a settings menu later. Movement, gravity, and jumping are calculated in `_physics_process`. Coyote time, jump buffering, and variable jump height make the controls forgiving without changing the collision model.
+## Terrain coordinates and rebuilding
 
-## Verification and limits
+Cell size is **8×8 world pixels**. The map has **288×144 cells** (2304×1152 px), split into **32×32 cell chunks** (45 chunks total). Local map origin is **(-800, -384)**. `world_to_cell` floors the offset world coordinate divided by 8; `cell_to_world` returns a cell's upper-left world position. Out-of-map queries return sky.
 
-Run the focused headless smoke check with `godot --headless --path . --script tests/sandbox_smoke.gd`. On 2026-09-18, it passed ground contact, slope ascent, platform jump, wall collision, pit fall, camera movement, input bindings, and FPS overlay checks with Godot 4.4.1. The project also launched in a window and exited cleanly after a short run. Manual play is still useful for judging feel. This milestone has only static test terrain, one character, and a reset action; terrain editing and generated collision belong to milestone 2.
+The byte array of material IDs is authoritative. `apply_edits` accepts an array of `{"cell": Vector2i, "material": id}` commands and returns counts of replaced solid material IDs. `remove_circle` and `paint_circle` use this API. Edits update cells immediately and mark touched chunks dirty, including neighboring chunks when a boundary cell changes. A single deferred flush rebuilds each dirty chunk once after the edit batch, outside the physics query/update phase.
 
-For milestone 2, introduce a chunked cell grid behind a world terrain scene, derive both visuals and static collision from dirty chunks, and swap that scene into `sandbox.tscn`. Keep the `CharacterBody2D` controller collision driven. Measure chunk rebuild and physics costs before choosing cell and chunk sizes.
+Each chunk creates an RGBA image from its cells, shown through a nearest-filtered `Sprite2D`. Solid cells are merged into horizontal runs, then identical runs across rows become `RectangleShape2D` regions on one `StaticBody2D` per chunk. Rectangles end exactly at cell and chunk boundaries. Old shapes are detached before new shapes are installed in the deferred flush. Sky has no collision. Terrain changes that would overlap a character are skipped; the flush also moves any embedded terrain actor upward to the first free position within 32 cells. These rules avoid invisible stale collision after edits and preserve traversable seams.
+
+## Verification and performance
+
+Run:
+
+```sh
+godot --headless --path . --script tests/sandbox_smoke.gd
+godot --headless --path . --script tests/terrain_smoke.gd
+godot --path . --resolution 1920x1080 --script tests/terrain_benchmark.gd
+```
+
+The movement and terrain smoke tests passed on 2026-09-18 with Godot 4.4.1. The terrain test dug across a chunk boundary, verified collision with a physics ray, repainted and removed rock, and walked through a narrow passage. The benchmark edits 180 consecutive rendered frames after 30 warm-up frames. Reference desktop: AMD Ryzen 7 7800X3D, 30 GiB RAM, AMD Radeon integrated graphics via WSLg D3D12/Mesa 22.3.6. Benchmark results and known limits are recorded in the [milestone plan](specs/IMPLEMENTATION_PLAN.md).
+
+This remains a small static sample map with one character. Cell edges are visible on slopes, and the step assist is tuned to this 8 px grid. The debug brush edits any material equally; resistance and yields are defined as data for the next milestones. The benchmark covers terrain editing in this map, not the larger water/object/explosion stress scene planned for milestone 10.

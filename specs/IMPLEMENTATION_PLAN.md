@@ -32,17 +32,19 @@ Based on [specs.md](specs.md). This checklist describes what to implement, how t
 
 **Start when:** Milestone 1 works and its controls feel usable.
 
-- [ ] Define material data with stable IDs, solidity, density, dig/blast resistance, value, appearance, and optional liquid/temperature properties. Start with sky, earth, and rock.
-- [ ] Prototype a chunked cell grid as the authoritative terrain representation. Use generated textures for rendering and static collision geometry for solid regions; avoid a physics body per cell.
-- [ ] Choose cell resolution, chunk dimensions, map size, and a reference desktop using measurements from the prototype. Record them as the baseline benchmark configuration.
-- [ ] Implement terrain query and edit operations, including circular removal and batched edits. Return material removal information for later mining yields.
-- [ ] Regenerate rendering and collision only for dirty chunks and affected boundaries. Merge edits to avoid repeated rebuilds in one update.
-- [ ] Apply collision updates at safe physics boundaries and handle objects or characters intersecting newly updated geometry.
-- [ ] Add a debug digging brush and material painting tools, then replace the sandbox's temporary terrain.
-- [ ] Expand the overlay with terrain chunk counts, dirty chunks, and rebuild timings.
-- [ ] Document coordinate conversion, collision generation, chunk seams, and edit scheduling.
+- [x] Define material data with stable IDs, solidity, density, dig/blast resistance, value, appearance, and optional liquid/temperature properties. Start with sky, earth, and rock.
+- [x] Prototype a chunked cell grid as the authoritative terrain representation. Use generated textures for rendering and static collision geometry for solid regions; avoid a physics body per cell.
+- [x] Choose cell resolution, chunk dimensions, map size, and a reference desktop using measurements from the prototype. Record them as the baseline benchmark configuration.
+- [x] Implement terrain query and edit operations, including circular removal and batched edits. Return material removal information for later mining yields.
+- [x] Regenerate rendering and collision only for dirty chunks and affected boundaries. Merge edits to avoid repeated rebuilds in one update.
+- [x] Apply collision updates at safe physics boundaries and handle objects or characters intersecting newly updated geometry.
+- [x] Add a debug digging brush and material painting tools, then replace the sandbox's temporary terrain.
+- [x] Expand the overlay with terrain chunk counts, dirty chunks, and rebuild timings.
+- [x] Document coordinate conversion, collision generation, chunk seams, and edit scheduling.
 
 **Complete when:** Digging creates traversable tunnels, including across chunk boundaries. Narrow passages, slopes, and repeated edits produce no collision gaps, invisible barriers, or persistent stale collision. Profile editing at 1920×1080 against the 60 FPS target before proceeding.
+
+**Milestone 2 verification (2026-09-18):** Godot 4.4.1 launched the updated scene. The original movement smoke test passed on generated terrain. `tests/terrain_smoke.gd` passed material loading, batched removal accounting, a cross-chunk tunnel, repaint/removal collision checks, narrow rock passage traversal, and character-safe painting. Baseline: 8 px cells, 32×32-cell chunks, 288×144-cell map (45 chunks); AMD Ryzen 7 7800X3D, 30 GiB RAM, AMD Radeon integrated graphics through WSLg D3D12/Mesa 22.3.6. The 1920×1080 windowed 180-frame repeated-edit benchmark averaged 7.32 ms/frame, worst 26.05 ms, with one frame over 16.67 ms; average chunk rebuild was 2.21 ms. This exceeds 60 FPS on average for the sample map, with one measured frame spike. See [README.md](../README.md) for changed files, architecture, controls, run instructions, and limits.
 
 ## 3. Mining, physical items, and inventory
 

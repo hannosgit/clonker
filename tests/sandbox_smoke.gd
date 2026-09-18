@@ -21,7 +21,7 @@ func _run() -> void:
 		return
 	if not _check(_camera.position_smoothing_enabled, "camera smoothing is enabled"):
 		return
-	if not _check(_player.is_on_floor() and absf(_player.global_position.y - 321.0) < 3.0, "spawn lands on flat ground"):
+	if not _check(_player.is_on_floor() and absf(_player.global_position.y - 325.0) < 3.0, "spawn lands on flat ground"):
 		return
 
 	Input.action_press("move_right")
@@ -38,7 +38,7 @@ func _run() -> void:
 	Input.action_release("jump")
 	Input.action_release("move_right")
 	await _frames(55)
-	if not _check(_player.is_on_floor() and absf(_player.global_position.y - 136.0) < 4.0, "jump onto raised platform"):
+	if not _check(_player.is_on_floor() and absf(_player.global_position.y - 141.0) < 4.0, "jump onto raised platform"):
 		return
 
 	_player.reset_at(Vector2(1040, 240))
@@ -46,7 +46,7 @@ func _run() -> void:
 	Input.action_press("move_right")
 	await _frames(45)
 	Input.action_release("move_right")
-	if not _check(_player.global_position.x < 1091.0, "wall blocks horizontal movement"):
+	if not _check(_player.global_position.x < 1094.0, "wall blocks horizontal movement"):
 		return
 
 	_player.reset_at(Vector2(690, 280))

@@ -8,9 +8,9 @@ script = ExtResource("1")
 [node name="Panel" type="PanelContainer" parent="."]
 offset_left = 16.0
 offset_top = 16.0
-offset_right = 375.0
-offset_bottom = 72.0
+offset_right = 690.0
+offset_bottom = 108.0
 modulate = Color(1, 1, 1, 0.9)
 
 [node name="Label" type="Label" parent="Panel"]
-text = "FPS: --\nA/D or arrows: move   Space/W/Up: jump   R: reset"
+text = "FPS: --   Chunks: --   Dirty: --   Rebuild: -- ms\nA/D: move   Space: jump   R: reset\nLeft: dig   Right: earth   Shift+Right: rock   Wheel: brush"
