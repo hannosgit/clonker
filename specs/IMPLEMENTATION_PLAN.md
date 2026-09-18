@@ -15,16 +15,18 @@ Based on [specs.md](specs.md). This checklist describes what to implement, how t
 
 **Start when:** This plan is accepted for implementation. This is the first coding task.
 
-- [ ] Initialize a clean Godot project with folders for scenes, scripts, data, assets, and tests.
-- [ ] Separate scenario/session management, world content, character control, and presentation. Introduce systems as they become necessary rather than scaffolding every planned system immediately.
-- [ ] Define movement and jump actions in Godot's Input Map so controls can be rebound later.
-- [ ] Build a small test scene with flat ground, slopes, platforms, walls, and a pit using temporary static terrain.
-- [ ] Implement a `CharacterBody2D` controller with responsive left/right movement, jumping, gravity, and collision in the physics tick.
-- [ ] Add original geometric character graphics, a smooth following camera, and an FPS display.
-- [ ] Keep the controller dependent on normal world collision, without references to temporary terrain nodes, so generated terrain can replace them later.
-- [ ] Document how to launch the sandbox and its controls.
+- [x] Initialize a clean Godot project with folders for scenes, scripts, data, assets, and tests.
+- [x] Separate scenario/session management, world content, character control, and presentation. Introduce systems as they become necessary rather than scaffolding every planned system immediately.
+- [x] Define movement and jump actions in Godot's Input Map so controls can be rebound later.
+- [x] Build a small test scene with flat ground, slopes, platforms, walls, and a pit using temporary static terrain.
+- [x] Implement a `CharacterBody2D` controller with responsive left/right movement, jumping, gravity, and collision in the physics tick.
+- [x] Add original geometric character graphics, a smooth following camera, and an FPS display.
+- [x] Keep the controller dependent on normal world collision, without references to temporary terrain nodes, so generated terrain can replace them later.
+- [x] Document how to launch the sandbox and its controls.
 
 **Complete when:** The game launches without errors; the character can traverse slopes, jump onto platforms, collide with walls, and fall into the pit; the camera follows smoothly. Deliver and verify this sandbox before beginning terrain work.
+
+**Milestone 1 verification (2026-09-18):** Godot 4.4.1 (`49a5bc7b6`) launched the scene in a window and exited with code 0. The headless runtime and `tests/sandbox_smoke.gd` passed ground, slope, platform, wall, pit, input binding, overlay, and camera checks. See [README.md](../README.md) for files, controls, run instructions, architecture, and limits.
 
 ## 2. Destructible terrain
 
