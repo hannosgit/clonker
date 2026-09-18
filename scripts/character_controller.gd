@@ -1,6 +1,7 @@
 extends CharacterBody2D
 class_name CharacterController
 
+const Inventory = preload("res://scripts/inventory.gd")
 @export var move_speed := 265.0
 @export var acceleration := 1900.0
 @export var ground_friction := 2300.0
@@ -13,6 +14,9 @@ class_name CharacterController
 
 var _coyote_timer := 0.0
 var _jump_buffer_timer := 0.0
+var health := 100
+var inventory: CharacterInventory = Inventory.new()
+var tool_cooldown := 0.0
 
 @onready var _visual: Node2D = $Visual
 @onready var _camera: Camera2D = $Camera2D

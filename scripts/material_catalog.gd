@@ -3,6 +3,9 @@ extends RefCounted
 const SKY := 0
 const EARTH := 1
 const ROCK := 2
+const COAL := 3
+const ORE := 4
+const GOLD := 5
 const PATH := "res://data/materials.json"
 static var _definitions: Dictionary = {}
 
@@ -15,7 +18,7 @@ static func load_definitions() -> void:
 		var id: int = entry["id"]
 		assert(not _definitions.has(id), "Duplicate material ID")
 		_definitions[id] = entry
-	for required in [SKY, EARTH, ROCK]:
+	for required in [SKY, EARTH, ROCK, COAL, ORE, GOLD]:
 		assert(_definitions.has(required), "Missing required material")
 
 

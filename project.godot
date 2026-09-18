@@ -45,3 +45,15 @@ terrain_paint={
 "deadzone": 0.2,
 "events": [Object(InputEventMouseButton,"button_index":2)]
 }
+pickup_item={
+"deadzone": 0.2,
+"events": [Object(InputEventKey,"physical_keycode":69)]
+}
+drop_item={
+"deadzone": 0.2,
+"events": [Object(InputEventKey,"physical_keycode":81)]
+}
+throw_item={
+"deadzone": 0.2,
+"events": [Object(InputEventKey,"physical_keycode":70)]
+}

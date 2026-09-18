@@ -231,3 +231,19 @@ func _generate_course() -> void:
 			if (wx >= 1100 and wx < 1132 and wy >= 184 and wy < 300) or (wx >= 155 and wx < 315 and wy >= 155 and wy < 179) or (wx >= 870 and wx < 1015 and wy >= 178 and wy < 202):
 				id = Materials.ROCK
 			cells[y * WIDTH + x] = id
+	# Fixed deposits make the sandbox repeatable; each cell yields one item.
+	_paint_deposit(Vector2(-470, 385), 36.0, Materials.COAL)
+	_paint_deposit(Vector2(-385, 425), 42.0, Materials.ORE)
+	_paint_deposit(Vector2(90, 500), 38.0, Materials.GOLD)
+	_paint_deposit(Vector2(470, 610), 46.0, Materials.ORE)
+
+
+func _paint_deposit(center: Vector2, radius: float, material: int) -> void:
+	var first := world_to_cell(center - Vector2.ONE * radius)
+	var last := world_to_cell(center + Vector2.ONE * radius)
+	for y in range(maxi(first.y, 0), mini(last.y, HEIGHT - 1) + 1):
+		for x in range(maxi(first.x, 0), mini(last.x, WIDTH - 1) + 1):
+			var cell := Vector2i(x, y)
+			var middle := cell_to_world(cell) + Vector2.ONE * CELL_SIZE * 0.5
+			if middle.distance_squared_to(center) <= radius * radius:
+				cells[y * WIDTH + x] = material

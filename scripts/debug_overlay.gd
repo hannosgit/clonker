@@ -9,5 +9,11 @@ var _time_until_refresh := 0.0
 func _process(delta: float) -> void:
 	_time_until_refresh -= delta
 	if _time_until_refresh <= 0.0:
-		_label.text = "FPS: %d   Chunks: %d   Dirty: %d   Rebuild: %.2f ms\nA/D: move   Space: jump   R: reset\nLeft: dig   Right: earth   Shift+Right: rock   Wheel: brush (%.0f px)" % [Engine.get_frames_per_second(), _world.chunks.size(), _world.dirty_chunks.size(), _world.last_rebuild_us / 1000.0, _session.brush_radius]
+		var inventory_text := ""
+		for i in _session.inventory.slots.size():
+			var stack: Dictionary = _session.inventory.slots[i]
+			var name: String = stack.get("id", "empty")
+			var quantity: int = stack.get("quantity", 0)
+			inventory_text += "%s%d:%s%s  " % ["[" if i == _session.inventory.selected else "", i + 1, name, (" x%d]" % quantity) if i == _session.inventory.selected else (" x%d" % quantity if quantity > 0 else "")]
+		_label.text = "FPS: %d   Physics objects: %d   Chunks: %d   Dirty: %d   Rebuild: %.2f ms\nHealth: %d   Selected: %d   Inventory: %s\nA/D move   Space jump   1-6 select   Left mine   E pickup   Q drop   F throw\nRight paint earth   Shift+Right rock   Wheel brush (%.0f px)   R reset" % [Engine.get_frames_per_second(), _session.physics_object_count(), _world.chunks.size(), _world.dirty_chunks.size(), _world.last_rebuild_us / 1000.0, _session.get_node("Character").health, _session.inventory.selected + 1, inventory_text, _session.brush_radius]
 		_time_until_refresh = 0.2

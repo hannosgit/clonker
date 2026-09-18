@@ -1,0 +1,7 @@
+[
+  {"id": "shovel", "name": "Shovel", "kind": "tool", "color": "#aeb6ad", "max_stack": 1, "tool": {"reach": 90.0, "radius": 16.0, "cooldown": 0.18, "power": {"1": 1.5}}},
+  {"id": "pickaxe", "name": "Pickaxe", "kind": "tool", "color": "#91a6bb", "max_stack": 1, "tool": {"reach": 82.0, "radius": 14.0, "cooldown": 0.28, "power": {"1": 1.0, "2": 3.5, "3": 2.5, "4": 3.5, "5": 4.5}}},
+  {"id": "coal", "name": "Coal", "kind": "resource", "color": "#242830", "max_stack": 32},
+  {"id": "ore", "name": "Ore", "kind": "resource", "color": "#bd7d5d", "max_stack": 32},
+  {"id": "gold", "name": "Gold", "kind": "resource", "color": "#f1c74e", "max_stack": 32}
+]

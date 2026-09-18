@@ -50,15 +50,17 @@ Based on [specs.md](specs.md). This checklist describes what to implement, how t
 
 **Start when:** Terrain editing and collision regeneration pass milestone 2.
 
-- [ ] Create declarative item/tool definitions and a shared tool action interface.
-- [ ] Implement shovel and pickaxe actions with reach, action timing, and material-specific effectiveness.
-- [ ] Add coal, ore, and gold deposits. Convert mined cells into resource chunks with defined yields and limits on spawned object counts.
-- [ ] Implement physical resource and equipment objects that fall, slide, collide, sleep when stationary, and can be picked up, carried, dropped, and thrown.
-- [ ] Add a small per-character inventory with item selection and explicit transfers between held and world states to prevent duplication.
-- [ ] Add a minimal HUD for health, selected item, and inventory. Expose active physics object counts in the overlay.
-- [ ] Test inventory capacity and transfers, tool/material effectiveness, and resource yield accounting as pure logic where practical.
+- [x] Create declarative item/tool definitions and a shared tool action interface.
+- [x] Implement shovel and pickaxe actions with reach, action timing, and material-specific effectiveness.
+- [x] Add coal, ore, and gold deposits. Convert mined cells into resource chunks with defined yields and limits on spawned object counts.
+- [x] Implement physical resource and equipment objects that fall, slide, collide, sleep when stationary, and can be picked up, carried, dropped, and thrown.
+- [x] Add a small per-character inventory with item selection and explicit transfers between held and world states to prevent duplication.
+- [x] Add a minimal HUD for health, selected item, and inventory. Expose active physics object counts in the overlay.
+- [x] Test inventory capacity and transfers, tool/material effectiveness, and resource yield accounting as pure logic where practical.
 
 **Complete when:** The player can dig to ore, mine it with the appropriate tool, collect it, transport it, and drop it elsewhere. Repeated pickup/drop actions neither duplicate nor lose resources.
+
+**Milestone 3 verification (2026-09-18):** Godot 4.4.1 launched the scene in a window and exited with code 0. The headless sandbox, terrain, and mining/inventory smoke tests passed. The new test walks from spawn to ore, verifies shovel resistance and pickaxe mining, compares removed ore cells with physical yield, carries ore away, then checks eight drop/pickup cycles, inventory capacity, partial pickup, pile-cap accounting, and item falling/sleeping. See [README.md](../README.md) for changed files, controls, architecture, run instructions, and limits.
 
 ## 4. Explosions and damage
 
