@@ -81,16 +81,18 @@ Based on [specs.md](specs.md). This checklist describes what to implement, how t
 
 **Start when:** Terrain edits and explosions reliably notify affected world regions.
 
-- [ ] Implement `LiquidSystem` separately from rigid-body physics, using cellular water amounts and fixed simulation steps.
-- [ ] Support downward flow, lateral spreading, and settling in cavities. Define world-edge behavior explicitly.
-- [ ] Update active cells or regions with a bounded per-tick budget. Wake settled regions when neighboring terrain or water changes.
-- [ ] Preserve water volume during transfers; define what happens when construction or later terrain changes displace water.
-- [ ] Add submersion queries and swimming movement to the character controller.
-- [ ] Reserve liquid type IDs and material interaction hooks for later lava/oil support without implementing those liquids yet.
-- [ ] Show simulated liquid cell counts and liquid update timing in the debug overlay.
-- [ ] Test closed-basin volume conservation, flow across chunks, and settled-region reactivation.
+- [x] Implement `LiquidSystem` separately from rigid-body physics, using cellular water amounts and fixed simulation steps.
+- [x] Support downward flow, lateral spreading, and settling in cavities. Define world-edge behavior explicitly.
+- [x] Update active cells or regions with a bounded per-tick budget. Wake settled regions when neighboring terrain or water changes.
+- [x] Preserve water volume during transfers; define what happens when construction or later terrain changes displace water.
+- [x] Add submersion queries and swimming movement to the character controller.
+- [x] Reserve liquid type IDs and material interaction hooks for later lava/oil support without implementing those liquids yet.
+- [x] Show simulated liquid cell counts and liquid update timing in the debug overlay.
+- [x] Test closed-basin volume conservation, flow across chunks, and settled-region reactivation.
 
 **Complete when:** Digging below a lake floods a mine; water falls through a new shaft and collects below; characters swim when submerged. A large settled lake consumes little simulation time and wakes correctly after excavation.
+
+**Milestone 5 verification (2026-09-19):** Godot 4.4.1 ran the water scene in a 1920×1080 window and exited with code 0. All five headless smoke tests passed. `tests/liquid_smoke.gd` verifies a 380-cell settled lake with zero queued work, swimming, water displacement by construction, release from a sealed displacement reserve, a new shaft flooding the mine floor, flow across the x=736 chunk seam, and exact water-unit conservation. The final 180-frame windowed benchmark averaged 4.66 ms/frame for the settled lake (worst 7.61 ms, zero frames over 16.67 ms) and 4.81 ms/frame during flooding (worst 33.91 ms, one frame over 16.67 ms); peak liquid update was 1.77 ms. Reference hardware and remaining limits are in [README.md](../README.md). Changed files: `scripts/liquid_system.gd`, `scripts/sandbox_world.gd`, `scripts/character_controller.gd`, `scripts/debug_overlay.gd`, `scenes/sandbox.tscn`, `tests/liquid_smoke.gd`, `tests/liquid_benchmark.gd`, and the documentation. Water is a separate fixed-step cell layer, limited to 512 active cells per step, with sealed map edges and preserved displaced units. A/D moves or swims horizontally; hold Space/W/Up to rise while submerged. Run with `godot --path .` and verify with the commands in [README.md](../README.md). Loose rigid bodies do not yet respond to water, and a flooding frame spike remains.
 
 ## 6. Construction and settlement storage
 

@@ -11,6 +11,10 @@ const Inventory = preload("res://scripts/inventory.gd")
 @export var max_fall_speed := 900.0
 @export var coyote_duration := 0.10
 @export var jump_buffer_duration := 0.12
+@export var swim_speed := 160.0
+@export var swim_acceleration := 900.0
+@export var swim_rise_speed := 220.0
+@export var swim_gravity := 180.0
 
 var _coyote_timer := 0.0
 var _jump_buffer_timer := 0.0
@@ -19,9 +23,11 @@ var max_health := 100
 var inventory: CharacterInventory = Inventory.new()
 var tool_cooldown := 0.0
 var _shake_strength := 0.0
+var submersion := 0.0
 
 @onready var _visual: Node2D = $Visual
 @onready var _camera: Camera2D = $Camera2D
+@onready var _liquid: LiquidSystem = get_parent().get_node("Liquid")
 
 
 func _process(delta: float) -> void:
@@ -34,12 +40,25 @@ func shake_camera(strength: float) -> void:
 
 
 func _physics_process(delta: float) -> void:
+	submersion = _liquid.character_submersion(global_position)
 	if health <= 0:
 		velocity.y = minf(velocity.y + gravity * delta, max_fall_speed)
 		velocity.x = move_toward(velocity.x, 0.0, ground_friction * delta)
 		move_and_slide()
 		return
 	var direction := Input.get_axis("move_left", "move_right")
+	if submersion >= 0.5:
+		_coyote_timer = 0.0
+		_jump_buffer_timer = 0.0
+		velocity.x = move_toward(velocity.x, direction * swim_speed, swim_acceleration * delta)
+		if Input.is_action_pressed("jump"):
+			velocity.y = move_toward(velocity.y, -swim_rise_speed, swim_acceleration * delta)
+		else:
+			velocity.y = move_toward(velocity.y, swim_gravity, swim_acceleration * 0.5 * delta)
+		move_and_slide()
+		if not is_zero_approx(direction):
+			_visual.scale.x = signf(direction)
+		return
 	var rate := acceleration if is_on_floor() else air_acceleration
 	if is_zero_approx(direction) and is_on_floor():
 		rate = ground_friction

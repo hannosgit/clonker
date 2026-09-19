@@ -1,6 +1,8 @@
 extends Node2D
 class_name SandboxWorld
 
+signal terrain_changed(changed_cells: Array[Vector2i])
+
 const CELL_SIZE := 8
 const CHUNK_SIZE := 32
 const WIDTH := 288
@@ -44,6 +46,7 @@ func get_cell_material(cell: Vector2i) -> int:
 
 func apply_edits(edits: Array) -> Dictionary:
 	var removed: Dictionary = {}
+	var changed: Array[Vector2i] = []
 	for edit in edits:
 		var cell: Vector2i = edit["cell"]
 		var material: int = edit["material"]
@@ -56,6 +59,9 @@ func apply_edits(edits: Array) -> Dictionary:
 			removed[old] = removed.get(old, 0) + 1
 		cells[cell.y * WIDTH + cell.x] = material
 		_mark_dirty(cell)
+		changed.append(cell)
+	if not changed.is_empty():
+		terrain_changed.emit(changed)
 	if not dirty_chunks.is_empty() and not _scheduled:
 		_scheduled = true
 		call_deferred("_flush_dirty")
@@ -238,6 +244,8 @@ func _generate_course() -> void:
 	_paint_deposit(Vector2(470, 610), 46.0, Materials.ORE)
 	_carve_cave(Vector2(-615, 440), 25.0)
 	_carve_cave(Vector2(-465, 440), 25.0)
+	# A dry mine below the lake floods when its roof is opened.
+	_carve_cave(Vector2(700, 640), 55.0)
 
 
 func _paint_deposit(center: Vector2, radius: float, material: int) -> void:
