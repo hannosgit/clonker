@@ -15,14 +15,30 @@ const Inventory = preload("res://scripts/inventory.gd")
 var _coyote_timer := 0.0
 var _jump_buffer_timer := 0.0
 var health := 100
+var max_health := 100
 var inventory: CharacterInventory = Inventory.new()
 var tool_cooldown := 0.0
+var _shake_strength := 0.0
 
 @onready var _visual: Node2D = $Visual
 @onready var _camera: Camera2D = $Camera2D
 
 
+func _process(delta: float) -> void:
+	_shake_strength = move_toward(_shake_strength, 0.0, 22.0 * delta)
+	_camera.offset = Vector2(randf_range(-1.0, 1.0), randf_range(-1.0, 1.0)) * _shake_strength
+
+
+func shake_camera(strength: float) -> void:
+	_shake_strength = maxf(_shake_strength, minf(strength, 4.0))
+
+
 func _physics_process(delta: float) -> void:
+	if health <= 0:
+		velocity.y = minf(velocity.y + gravity * delta, max_fall_speed)
+		velocity.x = move_toward(velocity.x, 0.0, ground_friction * delta)
+		move_and_slide()
+		return
 	var direction := Input.get_axis("move_left", "move_right")
 	var rate := acceleration if is_on_floor() else air_acceleration
 	if is_zero_approx(direction) and is_on_floor():
@@ -67,3 +83,17 @@ func reset_at(spawn_position: Vector2) -> void:
 	_coyote_timer = 0.0
 	_jump_buffer_timer = 0.0
 	_camera.reset_smoothing()
+	_camera.offset = Vector2.ZERO
+	_shake_strength = 0.0
+
+
+func receive_damage(amount: float, impulse: Vector2) -> void:
+	if health <= 0:
+		return
+	health = maxi(0, health - ceili(maxf(amount, 0.0)))
+	velocity += impulse
+
+
+func revive_at(spawn_position: Vector2) -> void:
+	health = max_health
+	reset_at(spawn_position)

@@ -236,6 +236,8 @@ func _generate_course() -> void:
 	_paint_deposit(Vector2(-385, 425), 42.0, Materials.ORE)
 	_paint_deposit(Vector2(90, 500), 38.0, Materials.GOLD)
 	_paint_deposit(Vector2(470, 610), 46.0, Materials.ORE)
+	_carve_cave(Vector2(-615, 440), 25.0)
+	_carve_cave(Vector2(-465, 440), 25.0)
 
 
 func _paint_deposit(center: Vector2, radius: float, material: int) -> void:
@@ -247,3 +249,14 @@ func _paint_deposit(center: Vector2, radius: float, material: int) -> void:
 			var middle := cell_to_world(cell) + Vector2.ONE * CELL_SIZE * 0.5
 			if middle.distance_squared_to(center) <= radius * radius:
 				cells[y * WIDTH + x] = material
+
+
+func _carve_cave(center: Vector2, radius: float) -> void:
+	var first := world_to_cell(center - Vector2.ONE * radius)
+	var last := world_to_cell(center + Vector2.ONE * radius)
+	for y in range(maxi(first.y, 0), mini(last.y, HEIGHT - 1) + 1):
+		for x in range(maxi(first.x, 0), mini(last.x, WIDTH - 1) + 1):
+			var cell := Vector2i(x, y)
+			var middle := cell_to_world(cell) + Vector2.ONE * CELL_SIZE * 0.5
+			if middle.distance_squared_to(center) <= radius * radius:
+				cells[y * WIDTH + x] = Materials.SKY

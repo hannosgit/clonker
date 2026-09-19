@@ -14,7 +14,7 @@ static func load_definitions() -> void:
 		assert(not _definitions.has(id), "Duplicate item ID: " + id)
 		assert(int(entry["max_stack"]) > 0, "Invalid stack size: " + id)
 		_definitions[id] = entry
-	for required in ["shovel", "pickaxe", "coal", "ore", "gold"]:
+	for required in ["shovel", "pickaxe", "explosive", "coal", "ore", "gold"]:
 		assert(_definitions.has(required), "Missing item: " + required)
 
 

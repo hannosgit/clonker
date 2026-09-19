@@ -4,6 +4,7 @@ class_name WorldItem
 const ItemCatalogScript = preload("res://scripts/item_catalog.gd")
 var item_id := ""
 var quantity := 1
+var health := 100.0
 
 
 func configure(id: String, amount: int) -> void:
@@ -30,3 +31,11 @@ func set_quantity(amount: int) -> void:
 	assert(amount > 0)
 	quantity = amount
 	_update_appearance()
+
+
+func receive_damage(amount: float, impulse: Vector2) -> void:
+	if not is_queued_for_deletion():
+		apply_central_impulse(impulse)
+		health -= maxf(amount, 0.0)
+		if health <= 0.0:
+			queue_free()

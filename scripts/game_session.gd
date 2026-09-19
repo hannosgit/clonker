@@ -7,6 +7,8 @@ const Materials = preload("res://scripts/material_catalog.gd")
 const Items = preload("res://scripts/item_catalog.gd")
 const MiningAction = preload("res://scripts/tool_action.gd")
 const ItemScene = preload("res://scenes/world_item.tscn")
+const ExplosiveScene = preload("res://scenes/timed_explosive.tscn")
+const ExplosiveScript = preload("res://scripts/timed_explosive.gd")
 
 @onready var _character: CharacterController = $Character
 @onready var _world: SandboxWorld = $World
@@ -23,12 +25,16 @@ var _pending_yields: Dictionary = {}
 func _ready() -> void:
 	inventory.add("shovel", 1)
 	inventory.add("pickaxe", 1)
+	inventory.slots[5] = {"id": "explosive", "quantity": 3}
 
 
 func _physics_process(delta: float) -> void:
 	_character.tool_cooldown = maxf(0.0, _character.tool_cooldown - delta)
 	if Input.is_action_just_pressed("restart_sandbox") or _character.global_position.y > FALL_LIMIT:
-		_character.reset_at(SPAWN_POSITION)
+		_character.revive_at(SPAWN_POSITION)
+	if _character.health <= 0:
+		_flush_pending_yields()
+		return
 	if Input.is_action_pressed("terrain_dig") and _character.tool_cooldown <= 0.0:
 		_use_selected_tool(get_global_mouse_position())
 	if Input.is_action_pressed("terrain_paint"):
@@ -48,6 +54,11 @@ func _use_selected_tool(target: Vector2) -> Dictionary:
 	if stack.is_empty():
 		return {}
 	var definition: Dictionary = Items.get_definition(stack["id"])
+	if definition["kind"] == "explosive":
+		if _character.global_position.distance_to(target) > 340.0:
+			return {}
+		throw_explosive(target)
+		return {}
 	if not definition.has("tool"):
 		return {}
 	var tool: Dictionary = definition["tool"]
@@ -76,12 +87,31 @@ func _spawn_resource(id: String, quantity: int, position: Vector2) -> void:
 
 
 func spawn_world_item(id: String, quantity: int, position: Vector2, impulse := Vector2.ZERO) -> WorldItem:
-	var item: WorldItem = ItemScene.instantiate()
+	var item: WorldItem = (ExplosiveScene if id == "explosive" else ItemScene).instantiate()
 	item.configure(id, quantity)
 	_items.add_child(item)
 	item.global_position = position
 	item.apply_central_impulse(impulse)
 	return item
+
+
+func throw_explosive(target: Vector2) -> WorldItem:
+	var stack := inventory.selected_stack()
+	if stack.get("id", "") != "explosive" or _character.health <= 0:
+		return null
+	var direction := (target - _character.global_position).normalized()
+	if direction == Vector2.ZERO:
+		direction = Vector2.RIGHT
+	var start := _character.global_position + direction * 27.0
+	if _world.solid_intersects(Rect2(start - Vector2.ONE * 7.0, Vector2.ONE * 14.0)):
+		start = _character.global_position + Vector2.UP * 28.0
+	var charge: WorldItem = spawn_world_item("explosive", 1, start, direction * 170.0 + Vector2.UP * 90.0)
+	charge.arm(float(Items.get_definition("explosive")["fuse"]))
+	inventory.slots[inventory.selected]["quantity"] = int(stack["quantity"]) - 1
+	if inventory.slots[inventory.selected]["quantity"] <= 0:
+		inventory.slots[inventory.selected] = {}
+	_character.tool_cooldown = 0.35
+	return charge
 
 
 func pickup_nearest() -> bool:
@@ -90,7 +120,7 @@ func pickup_nearest() -> bool:
 	for child in _items.get_children():
 		var item := child as WorldItem
 		var distance := _character.global_position.distance_squared_to(item.global_position)
-		if distance < best_distance and inventory.capacity_for(item.item_id) > 0:
+		if distance < best_distance and inventory.capacity_for(item.item_id) > 0 and not (item is ExplosiveScript and item.armed):
 			closest = item
 			best_distance = distance
 	if closest == null:
@@ -110,6 +140,8 @@ func drop_selected(throw_item: bool) -> WorldItem:
 	var stack := inventory.selected_stack()
 	if stack.is_empty():
 		return null
+	if stack["id"] == "explosive" and throw_item:
+		return throw_explosive(get_global_mouse_position())
 	var direction := signf(get_global_mouse_position().x - _character.global_position.x)
 	if is_zero_approx(direction):
 		direction = 1.0

@@ -66,14 +66,16 @@ Based on [specs.md](specs.md). This checklist describes what to implement, how t
 
 **Start when:** Tools, items, and resource removal use shared terrain operations.
 
-- [ ] Add health and a reusable damage/impulse interface for characters and damageable objects.
-- [ ] Implement a throwable timed explosive with a fuse and one shared explosion operation.
-- [ ] Use material blast resistance to carve terrain; damage characters and apply knockback to characters and loose objects.
-- [ ] Queue chain reactions so each explosive detonates once and large chains do not cause recursive processing spikes.
-- [ ] Add restrained camera shake, a visible blast effect, and a simple recovery/restart path after death.
-- [ ] Test damage falloff, single detonation, and chain reaction handling.
+- [x] Add health and a reusable damage/impulse interface for characters and damageable objects.
+- [x] Implement a throwable timed explosive with a fuse and one shared explosion operation.
+- [x] Use material blast resistance to carve terrain; damage characters and apply knockback to characters and loose objects.
+- [x] Queue chain reactions so each explosive detonates once and large chains do not cause recursive processing spikes.
+- [x] Add restrained camera shake, a visible blast effect, and a simple recovery/restart path after death.
+- [x] Test damage falloff, single detonation, and chain reaction handling.
 
 **Complete when:** A blast opens a tunnel between caves, exposes resources, moves objects, and can injure the player. Consecutive blasts across chunk boundaries leave collision correct and remain within the measured performance budget.
+
+**Milestone 4 verification (2026-09-18):** Godot 4.4.1 launched the main scene in a window for 120 frames and exited with code 0. The headless sandbox, terrain, mining/inventory, and explosion tests passed. The explosion test verifies the two generated caves are separated across the x=-544 chunk seam, a blast connects them, consecutive blasts leave collision current, ore becomes physical yield, the player takes falloff damage and knockback, a loose item receives impulse, a fuse detonates once, a 24-charge chain drains with at most eight detonations per physics tick, and recovery restores health. A 1920×1080 windowed 180-frame benchmark with 15 blasts averaged 5.80 ms/frame, worst 30.45 ms, with two frames over 16.67 ms. Average performance meets the 60 FPS budget on this sample map, while intermittent frame spikes remain. See [README.md](../README.md) for changed files, architecture, controls, run instructions, and limits.
 
 ## 5. Water and swimming
 
