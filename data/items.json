@@ -4,5 +4,8 @@
   {"id": "explosive", "name": "Timed charge", "kind": "explosive", "color": "#dc5839", "max_stack": 6, "fuse": 2.0, "blast_radius": 112.0, "blast_power": 8.0, "damage": 85.0},
   {"id": "coal", "name": "Coal", "kind": "resource", "color": "#242830", "max_stack": 32},
   {"id": "ore", "name": "Ore", "kind": "resource", "color": "#bd7d5d", "max_stack": 32},
-  {"id": "gold", "name": "Gold", "kind": "resource", "color": "#f1c74e", "max_stack": 32}
+  {"id": "gold", "name": "Gold", "kind": "resource", "color": "#f1c74e", "max_stack": 32},
+  {"id": "stone", "name": "Stone", "kind": "resource", "color": "#838d93", "max_stack": 32},
+  {"id": "wood", "name": "Wood", "kind": "resource", "color": "#ad7848", "max_stack": 32},
+  {"id": "metal", "name": "Metal", "kind": "resource", "color": "#bec9d0", "max_stack": 32}
 ]

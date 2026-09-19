@@ -65,3 +65,20 @@ func take_selected() -> Dictionary:
 	if not stack.is_empty():
 		slots[selected] = {}
 	return stack
+
+
+func remove(id: String, quantity: int) -> bool:
+	if quantity <= 0 or count(id) < quantity:
+		return false
+	var remaining := quantity
+	for i in SLOT_COUNT:
+		if slots[i].get("id", "") != id:
+			continue
+		var used: int = mini(remaining, int(slots[i]["quantity"]))
+		slots[i]["quantity"] = int(slots[i]["quantity"]) - used
+		remaining -= used
+		if int(slots[i]["quantity"]) == 0:
+			slots[i] = {}
+		if remaining == 0:
+			break
+	return true

@@ -1,4 +1,4 @@
-[gd_scene load_steps=7 format=3]
+[gd_scene load_steps=8 format=3]
 
 [ext_resource type="Script" path="res://scripts/game_session.gd" id="1"]
 [ext_resource type="PackedScene" path="res://scenes/sandbox_world.tscn" id="2"]
@@ -6,6 +6,7 @@
 [ext_resource type="PackedScene" path="res://scenes/debug_overlay.tscn" id="4"]
 [ext_resource type="Script" path="res://scripts/explosion_system.gd" id="5"]
 [ext_resource type="Script" path="res://scripts/liquid_system.gd" id="6"]
+[ext_resource type="Script" path="res://scripts/construction_system.gd" id="7"]
 
 [node name="Sandbox" type="Node2D"]
 script = ExtResource("1")
@@ -19,6 +20,9 @@ script = ExtResource("6")
 position = Vector2(-620, 280)
 
 [node name="Items" type="Node2D" parent="."]
+
+[node name="Construction" type="Node2D" parent="."]
+script = ExtResource("7")
 
 [node name="Explosions" type="Node2D" parent="."]
 script = ExtResource("5")

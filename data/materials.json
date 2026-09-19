@@ -1,7 +1,7 @@
 [
   {"id": 0, "name": "Sky", "solid": false, "density": 0.0, "dig_resistance": 0.0, "blast_resistance": 0.0, "value": 0, "color": "#00000000", "liquid": null, "temperature": null},
   {"id": 1, "name": "Earth", "solid": true, "density": 1.5, "dig_resistance": 1.0, "blast_resistance": 1.0, "value": 1, "color": "#896045", "liquid": null, "temperature": null},
-  {"id": 2, "name": "Rock", "solid": true, "density": 2.7, "dig_resistance": 3.0, "blast_resistance": 4.0, "value": 2, "color": "#59636b", "liquid": null, "temperature": null},
+  {"id": 2, "name": "Rock", "solid": true, "density": 2.7, "dig_resistance": 3.0, "blast_resistance": 4.0, "value": 2, "color": "#59636b", "liquid": null, "temperature": null, "yield_item": "stone", "yield_count": 1},
   {"id": 3, "name": "Coal deposit", "solid": true, "density": 1.6, "dig_resistance": 2.0, "blast_resistance": 2.0, "value": 4, "color": "#272b32", "liquid": null, "temperature": null, "yield_item": "coal", "yield_count": 1},
   {"id": 4, "name": "Ore deposit", "solid": true, "density": 3.1, "dig_resistance": 3.0, "blast_resistance": 4.0, "value": 8, "color": "#a06c52", "liquid": null, "temperature": null, "yield_item": "ore", "yield_count": 1},
   {"id": 5, "name": "Gold deposit", "solid": true, "density": 3.5, "dig_resistance": 4.0, "blast_resistance": 5.0, "value": 20, "color": "#e4b94c", "liquid": null, "temperature": null, "yield_item": "gold", "yield_count": 1}

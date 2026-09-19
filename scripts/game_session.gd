@@ -13,6 +13,7 @@ const ExplosiveScript = preload("res://scripts/timed_explosive.gd")
 @onready var _character: CharacterController = $Character
 @onready var _world: SandboxWorld = $World
 @onready var _items: Node2D = $Items
+@onready var _construction: ConstructionSystem = $Construction
 var inventory: CharacterInventory:
 	get:
 		return _character.inventory
@@ -20,6 +21,7 @@ var inventory: CharacterInventory:
 		_character.inventory = value
 var brush_radius := 24.0
 var _pending_yields: Dictionary = {}
+var _suppress_paint_until_release := false
 
 
 func _ready() -> void:
@@ -30,14 +32,19 @@ func _ready() -> void:
 
 func _physics_process(delta: float) -> void:
 	_character.tool_cooldown = maxf(0.0, _character.tool_cooldown - delta)
+	if not Input.is_action_pressed("terrain_paint"):
+		_suppress_paint_until_release = false
 	if Input.is_action_just_pressed("restart_sandbox") or _character.global_position.y > FALL_LIMIT:
 		_character.revive_at(SPAWN_POSITION)
 	if _character.health <= 0:
 		_flush_pending_yields()
 		return
+	if _construction.build_mode:
+		_flush_pending_yields()
+		return
 	if Input.is_action_pressed("terrain_dig") and _character.tool_cooldown <= 0.0:
 		_use_selected_tool(get_global_mouse_position())
-	if Input.is_action_pressed("terrain_paint"):
+	if Input.is_action_pressed("terrain_paint") and not _suppress_paint_until_release:
 		var material := Materials.ROCK if Input.is_key_pressed(KEY_SHIFT) else Materials.EARTH
 		_world.paint_circle(get_global_mouse_position(), brush_radius, material)
 	if Input.is_action_just_pressed("pickup_item"):
@@ -47,6 +54,10 @@ func _physics_process(delta: float) -> void:
 	if Input.is_action_just_pressed("throw_item"):
 		drop_selected(true)
 	_flush_pending_yields()
+
+
+func suppress_paint_until_release() -> void:
+	_suppress_paint_until_release = true
 
 
 func _use_selected_tool(target: Vector2) -> Dictionary:
@@ -198,6 +209,8 @@ func physics_object_count() -> int:
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and not event.echo:
+		if _construction.build_mode:
+			return
 		for index in range(6):
 			if event.physical_keycode == KEY_1 + index:
 				inventory.select_slot(index)

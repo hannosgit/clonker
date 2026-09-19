@@ -98,15 +98,17 @@ Based on [specs.md](specs.md). This checklist describes what to implement, how t
 
 **Start when:** Physical resource transport and flooding work together.
 
-- [ ] Define building data for footprint, support rules, required materials, storage capacity, and interaction points.
-- [ ] Implement a translucent placement preview with clear feedback for invalid placement or missing resources.
-- [ ] Validate terrain support, overlap with structures/characters, allowed construction area, and resource availability before committing placement and material consumption together.
-- [ ] Add the base, workshop, furnace, and storage. Use instant construction initially, with construction state separate from placement validation so timed work can be added later.
-- [ ] Implement resource deposits and withdrawals with explicit accounting. Stored resources can be serialized contents that return to physical objects when withdrawn.
-- [ ] Resolve progression bootstrapping: provide starting metal, a starter furnace, or an alternative initial recipe so a furnace requiring metal can actually be built.
-- [ ] Define and implement what happens when digging removes a building's support; recheck support after relevant terrain edits.
+- [x] Define building data for footprint, support rules, required materials, storage capacity, and interaction points.
+- [x] Implement a translucent placement preview with clear feedback for invalid placement or missing resources.
+- [x] Validate terrain support, overlap with structures/characters, allowed construction area, and resource availability before committing placement and material consumption together.
+- [x] Add the base, workshop, furnace, and storage. Use instant construction initially, with construction state separate from placement validation so timed work can be added later.
+- [x] Implement resource deposits and withdrawals with explicit accounting. Stored resources can be serialized contents that return to physical objects when withdrawn.
+- [x] Resolve progression bootstrapping: provide starting metal, a starter furnace, or an alternative initial recipe so a furnace requiring metal can actually be built.
+- [x] Define and implement what happens when digging removes a building's support; recheck support after relevant terrain edits.
 
 **Complete when:** The player can collect materials, place and supply a building, and store/retrieve resources. Invalid placements consume nothing. Undermining a building produces the defined support behavior, and the starting supplies allow progression to refining.
+
+**Milestone 6 verification (2026-09-19):** Godot 4.4.1 launched the playable scene in a 1920×1080 window for 120 frames and exited with code 0. The six headless smoke tests passed, including `tests/construction_smoke.gd`. The construction test verifies supported starter base stock, terrain/character/building/bounds rejection with no resource loss, missing-metal rejection without consuming stone, successful workshop/furnace/storage placement and one-time costs, physical resource pickup and storage, withdrawal as a physical item, over-capacity rejection, and the workshop collapsing after undermining while releasing all stored contents. The prior movement, terrain, mining, explosion, and liquid tests still pass. Changed files: `data/buildings.json`, `data/items.json`, `data/materials.json`, `scripts/building_catalog.gd`, `scripts/building.gd`, `scripts/construction_system.gd`, `scripts/inventory.gd`, `scripts/game_session.gd`, `scripts/debug_overlay.gd`, `scenes/sandbox.tscn`, `scenes/debug_overlay.tscn`, `tests/construction_smoke.gd`, and documentation. Building definitions and the separate construction state keep instant placement independent of future timed work. A supplied base provides 24 wood, 24 stone, and 5 metal; this covers a workshop, furnace, and storage before refining is implemented. B opens build mode; 1–4 choose a building; left click places; G deposits a selected resource stack; [/] choose a resource; H withdraws it into the world. Unsupported buildings collapse and spill stored resources, without returning construction costs. Wood remains finite starter stock until milestone 7 adds a source, and production is not implemented yet. Run commands and details are in [README.md](../README.md).
 
 ## 7. Production and economy
 
