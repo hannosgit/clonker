@@ -2,6 +2,7 @@ extends RigidBody2D
 class_name WorldItem
 
 const ItemCatalogScript = preload("res://scripts/item_catalog.gd")
+const Art = preload("res://scripts/item_art.gd")
 var item_id := ""
 var quantity := 1
 var health := 100.0
@@ -22,9 +23,17 @@ func _ready() -> void:
 func _update_appearance() -> void:
 	if item_id.is_empty():
 		return
-	var definition: Dictionary = ItemCatalogScript.get_definition(item_id)
-	$Visual.color = Color.html(definition["color"])
+	$Visual.hide()
 	$Count.text = str(quantity) if quantity > 1 else ""
+	$Count.add_theme_color_override("font_color", Color("ede4c2"))
+	$Count.add_theme_color_override("font_outline_color", Color("203633"))
+	$Count.add_theme_constant_override("outline_size", 3)
+	queue_redraw()
+
+
+func _draw() -> void:
+	if not item_id.is_empty():
+		Art.draw_icon(self, item_id, Vector2.ZERO, 0.6)
 
 
 func set_quantity(amount: int) -> void:

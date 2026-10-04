@@ -1,28 +1,43 @@
 extends CanvasLayer
 
+const Hud = preload("res://scripts/game_hud.gd")
 @onready var _label: Label = $Panel/Label
 @onready var _world: SandboxWorld = get_parent().get_node("World")
 @onready var _liquid: LiquidSystem = get_parent().get_node("Liquid")
 @onready var _session: Node2D = get_parent()
-@onready var _construction: ConstructionSystem = get_parent().get_node("Construction")
 var _time_until_refresh := 0.0
+
+
+func _ready() -> void:
+	$Panel.hide()
+	$Panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var panel_style := StyleBoxFlat.new()
+	panel_style.bg_color = Color("203433ee")
+	panel_style.set_corner_radius_all(8)
+	panel_style.content_margin_left = 14
+	panel_style.content_margin_right = 14
+	panel_style.content_margin_top = 10
+	panel_style.content_margin_bottom = 10
+	$Panel.add_theme_stylebox_override("panel", panel_style)
+	$Panel.offset_left = 320
+	$Panel.offset_top = 24
+	$Panel.offset_right = 1012
+	$Panel.offset_bottom = 100
+	_label.add_theme_font_size_override("font_size", 12)
+	var hud := Hud.new()
+	hud.name = "GameHud"
+	hud.session = _session
+	add_child(hud)
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	if event is InputEventKey and event.pressed and not event.echo and event.physical_keycode == KEY_F3:
+		$Panel.visible = not $Panel.visible
+		get_viewport().set_input_as_handled()
 
 
 func _process(delta: float) -> void:
 	_time_until_refresh -= delta
 	if _time_until_refresh <= 0.0:
-		var inventory_text := ""
-		for i in _session.inventory.slots.size():
-			var stack: Dictionary = _session.inventory.slots[i]
-			var name: String = stack.get("id", "empty")
-			var quantity: int = stack.get("quantity", 0)
-			inventory_text += "%s%d:%s%s  " % ["[" if i == _session.inventory.selected else "", i + 1, name, (" x%d]" % quantity) if i == _session.inventory.selected else (" x%d" % quantity if quantity > 0 else "")]
-		var dead: bool = _session.get_node("Character").health <= 0
-		var build_text := "Build: off"
-		if _construction.build_mode:
-			var data: Dictionary = BuildingCatalog.get_definition(_construction.selected_id)
-			build_text = "Build: %s %s   Cost: %s" % [data["name"], "VALID" if _construction._preview_reason.is_empty() else _construction._preview_reason, str(data["cost"])]
-		var storage: SettlementBuilding = _construction.nearest_storage()
-		var storage_text := "none nearby" if storage == null else "%s %d/%d %s" % [storage.definition["name"], storage.stored_count(), int(storage.definition["storage_capacity"]), str(storage.contents)]
-		_label.text = "FPS: %d   Physics objects: %d   Chunks: %d   Dirty: %d   Rebuild: %.2f ms   Water: %d cells/%d active   Liquid: %.2f ms\nHealth: %d%s   Selected: %d   Inventory: %s\n%s   Storage: %s   Withdraw: %s   %s\nB build   1-4 building   Left place   Right/Esc cancel   G deposit stack   [/] resource   H withdraw\nA/D move   Space jump/swim   E pickup   Q drop   F throw   Right paint   Wheel brush (%.0f px)   R recover" % [Engine.get_frames_per_second(), _session.physics_object_count(), _world.chunks.size(), _world.dirty_chunks.size(), _world.last_rebuild_us / 1000.0, _liquid.active_cell_count, _liquid._active.size() - _liquid._active_head, _liquid.last_update_us / 1000.0, _session.get_node("Character").health, "   DEAD: press R" if dead else "", _session.inventory.selected + 1, inventory_text, build_text, storage_text, _construction.RESOURCE_IDS[_construction.selected_resource], _construction.status_text, _session.brush_radius]
+		_label.text = "FPS: %d   Bodies: %d   Chunks: %d   Dirty: %d   Rebuild: %.2f ms\nWater: %d cells / %d queued   Liquid: %.2f ms   Brush: %.0f px" % [Engine.get_frames_per_second(), _session.physics_object_count(), _world.chunks.size(), _world.dirty_chunks.size(), _world.last_rebuild_us / 1000.0, _liquid.active_cell_count, _liquid._active.size() - _liquid._active_head, _liquid.last_update_us / 1000.0, _session.brush_radius]
 		_time_until_refresh = 0.2

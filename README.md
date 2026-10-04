@@ -2,6 +2,8 @@
 
 Milestone 6 of the [implementation plan](specs/IMPLEMENTATION_PLAN.md) adds construction and settlement storage to the playable mining, explosion, and water sandbox. It uses Godot **4.4.1** (official build `49a5bc7b6`). Open `project.godot` and press F5, or run `godot --path .`.
 
+The woodland presentation adds a gradient sky, parallax hills, pines and surface plants, textured earth and mineral deposits, an animated miner with visible equipment, distinct timber and masonry buildings, and gently animated water. The compact HUD shows vitality, six equipment slots, nearby storage, and construction costs. **F1** opens the field guide; **F3** toggles performance diagnostics. All artwork is drawn locally with Godot shapes, cached terrain tiles, and one water shader; no external assets or downloads are required.
+
 | Action | Default input |
 | --- | --- |
 | Move | A/D or Left/Right |
@@ -23,6 +25,8 @@ Milestone 6 of the [implementation plan](specs/IMPLEMENTATION_PLAN.md) adds cons
 | Deposit selected resource stack into nearest building | G |
 | Choose resource to withdraw | [ / ] |
 | Withdraw chosen resource as a physical item | H |
+| Toggle field guide | F1; Esc also closes it |
+| Toggle performance diagnostics | F3 |
 
 The first two slots contain a shovel and a pickaxe; slot 6 starts with three timed charges. The shovel digs earth; the pickaxe digs earth, rock, coal, ore, and gold. Coal lies near x=-470 and ore near x=-385, just below the starting ground. Dig toward a deposit, collect its loose chunks with E, carry them in inventory, and drop them elsewhere with Q. Rock yields stone when mined with a pickaxe. Two caves centered near (-615, 440) and (-465, 440) are separated by a wall; a charge can connect them. A thrown charge arms a two-second fuse. The blast removes material according to blast resistance, turns exposed deposits into resource piles, damages the player, and pushes loose objects. A lake fills the pit at x=620–770. A dry mine centered at (700, 640) sits below it; excavate the lake floor around (700, 520) and continue down through the roof to flood the mine. Hold jump to swim upward when submerged. Dead characters cannot act until R recovers them at spawn with full health. Right-click painting and the mouse-wheel brush are debug editing tools. Painting occupied character cells is rejected.
 
@@ -39,7 +43,8 @@ A supplied base stands west of the starting character at x=-736. It begins with 
 - `scenes/sandbox_world.tscn` and `scripts/sandbox_world.gd` own the authoritative terrain cells, rendering, collision, edit API, and rebuild statistics. The old hand-built terrain has been replaced.
 - `scripts/liquid_system.gd` owns water amounts and liquid type IDs in separate cell arrays, fixed-step flow, active-cell scheduling, submersion queries, water rendering, displacement accounting, and a contact signal for future material reactions. The terrain edit API emits changed cells; mining, painting, and explosions therefore wake the same liquid simulation. `CharacterController` queries submersion for swimming.
 - `scenes/sandbox.tscn` and `scripts/game_session.gd` own the playable session, items, debug brush, spawn, and reset. `scripts/character_controller.gd` uses regular physics collision and a grounded 8 px step to traverse cell-sized slope ledges. It never queries a terrain node.
-- `scenes/debug_overlay.tscn` and `scripts/debug_overlay.gd` display health, inventory, selected slot, FPS, active physics object count, chunk count, pending dirty chunks, last rebuild time, simulated water cell count, queued liquid cells, last liquid update time, and controls.
+- `scripts/game_hud.gd` displays vitality, equipment, construction, nearby storage, contextual instructions, and the F1 field guide. `scenes/debug_overlay.tscn` and `scripts/debug_overlay.gd` retain performance metrics behind F3. `scripts/item_art.gd` shares tool and resource artwork between the HUD, held equipment, and loose items.
+- `scripts/sky_backdrop.gd` draws the sky and camera-relative distant hills. `scripts/world_scenery.gd` draws underground backgrounds and decorations anchored to solid terrain. `scripts/character_visual.gd` animates the miner's stride, held tool, and damage flash. `scripts/world_feedback.gd` supplies a mining cursor, bounded debris particles, and nearby pickup prompts. `assets/water.gdshader` animates the water's tint without changing its simulation.
 - `tests/sandbox_smoke.gd` replays movement from milestone 1. `tests/terrain_smoke.gd` checks edits, material accounting, dirty rebuilds, collision, seam traversal, and a narrow rock passage. `tests/mining_inventory_smoke.gd` checks tool effectiveness, ore yield, transfers, capacity, and body settling. `tests/explosion_smoke.gd` checks damage falloff, caves, collision after seam blasts, physical yields, impulses, fuse timing, bounded chains, and recovery. `tests/liquid_smoke.gd` checks settled-lake work, swimming, displacement, flooding, a chunk seam, and volume conservation. `tests/construction_smoke.gd` checks invalid placement accounting, the metal bootstrap, all four buildings, resource storage and retrieval, and undermining. The benchmark scripts measure edits, blasts, and water at 1920×1080.
 
 ## Construction and support
@@ -52,7 +57,7 @@ Each building stores only resource items, up to its total unit capacity. Deposit
 
 Each 8 px cell stores 0–255 water units; one full cell is 255 units. Water uses a 30 Hz fixed step separate from rigid-body physics. Each step processes at most 512 queued cells, first transferring downward into available space, then equalizing left and right neighbors. Transfers preserve integer water units. A cell wakes with its neighbors when water moves or when nearby terrain changes; a settled lake has an empty queue and costs effectively no flow work. The map edges are sealed: water cannot enter or leave outside the 288×144-cell map.
 
-Water is drawn as translucent blue chunk textures. `LiquidType` reserves IDs 1–3 for water, lava, and oil; only water is simulated. `liquid_material_contact` is the hook for later terrain reactions. When new solid terrain covers water, the system first removes the water from that cell and seeks nearby open capacity. If no reachable capacity exists within the bounded search, the units stay in a displacement reserve and are retried when terrain changes. `total_water_units()` includes this reserve, so construction and terrain edits do not silently delete water. The character samples head, torso, and legs; at half submersion it switches to slower horizontal swimming, reduced downward motion, and jump-held upward movement.
+Water is drawn as translucent teal chunk textures with a pale surface edge and a subtle animated shader. `LiquidType` reserves IDs 1–3 for water, lava, and oil; only water is simulated. `liquid_material_contact` is the hook for later terrain reactions. When new solid terrain covers water, the system first removes the water from that cell and seeks nearby open capacity. If no reachable capacity exists within the bounded search, the units stay in a displacement reserve and are retried when terrain changes. `total_water_units()` includes this reserve, so construction and terrain edits do not silently delete water. The character samples head, torso, and legs; at half submersion it switches to slower horizontal swimming, reduced downward motion, and jump-held upward movement.
 
 ## Terrain coordinates and rebuilding
 
@@ -63,6 +68,8 @@ The byte array of material IDs is authoritative. `apply_edits` accepts an array 
 Each chunk creates an RGBA image from its cells, shown through a nearest-filtered `Sprite2D`. Solid cells are merged into horizontal runs, then identical runs across rows become `RectangleShape2D` regions on one `StaticBody2D` per chunk. Rectangles end exactly at cell and chunk boundaries. Old shapes are detached before new shapes are installed in the deferred flush. Sky has no collision. Terrain changes that would overlap a character are skipped; the flush also moves any embedded terrain actor upward to the first free position within 32 cells. These rules avoid invisible stale collision after edits and preserve traversable seams.
 
 ## Verification and performance
+
+The visual update was verified on 2026-10-04 with all six smoke tests, including the field guide and diagnostic toggles, plus rendered HUD, storage, construction, and landscape checks. At 1920×1080, the terrain edit benchmark averaged 14.68 ms per frame and 4.49 ms per rebuild, versus 8.13 ms and 2.50 ms for the original game in the same session. The updated water benchmark averaged 7.93 ms for the settled lake and 9.87 ms for flooding; worst frames were 50.73 ms and 21.46 ms respectively. The detailed terrain increases edit cost, and occasional frames still exceed 16.67 ms. Terrain artwork is cached in small tiles and the HUD redraws when its displayed state changes.
 
 Run:
 

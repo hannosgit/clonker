@@ -17,7 +17,29 @@ func _run() -> void:
 	for action in ["move_left", "move_right", "jump", "restart_sandbox"]:
 		if not _check(InputMap.has_action(action) and not InputMap.action_get_events(action).is_empty(), action + " has a default key binding"):
 			return
-	if not _check(sandbox.get_node("DebugOverlay/Panel/Label").text.begins_with("FPS:"), "FPS overlay is visible"):
+	if not _check(sandbox.has_node("DebugOverlay/GameHud") and sandbox.get_node("DebugOverlay/GameHud").visible, "game HUD is visible"):
+		return
+	var diagnostics: PanelContainer = sandbox.get_node("DebugOverlay/Panel")
+	if not _check(not diagnostics.visible, "diagnostics start hidden"):
+		return
+	var toggle := InputEventKey.new()
+	toggle.physical_keycode = KEY_F3
+	toggle.pressed = true
+	sandbox.get_node("DebugOverlay")._unhandled_input(toggle)
+	var hud: Control = sandbox.get_node("DebugOverlay/GameHud")
+	toggle.physical_keycode = KEY_F1
+	hud._unhandled_input(toggle)
+	if not _check(hud.guide_open, "F1 opens the field guide"):
+		return
+	toggle.physical_keycode = KEY_ESCAPE
+	hud._unhandled_input(toggle)
+	if not _check(not hud.guide_open, "Escape closes the field guide"):
+		return
+	if not _check(diagnostics.visible and sandbox.get_node("DebugOverlay/Panel/Label").text.begins_with("FPS:"), "F3 shows diagnostics"):
+		return
+	toggle.physical_keycode = KEY_F3
+	sandbox.get_node("DebugOverlay")._unhandled_input(toggle)
+	if not _check(not diagnostics.visible, "F3 hides diagnostics again"):
 		return
 	if not _check(_camera.position_smoothing_enabled, "camera smoothing is enabled"):
 		return

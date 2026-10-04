@@ -5,7 +5,7 @@ const Materials = preload("res://scripts/material_catalog.gd")
 const Items = preload("res://scripts/item_catalog.gd")
 const ExplosiveScript = preload("res://scripts/timed_explosive.gd")
 const MAX_DETONATIONS_PER_TICK := 8
-const EFFECT_DURATION := 0.32
+const EFFECT_DURATION := 0.55
 
 var pending: Array[WorldItem] = []
 var detonation_count := 0
@@ -72,6 +72,7 @@ func explode(center: Vector2, radius: float, power: float, max_damage: float, so
 		if material_definition.has("yield_item"):
 			get_parent()._spawn_resource(material_definition["yield_item"], int(removed[material]) * int(material_definition["yield_count"]), center)
 	_effects.append({"center": center, "time": EFFECT_DURATION, "radius": radius})
+	get_parent().get_node("Feedback").emit_chips(center, Color("d7b581"), 24)
 	queue_redraw()
 	var camera_distance := _player.global_position.distance_to(center)
 	if camera_distance < radius * 3.0:
@@ -88,17 +89,23 @@ static func damage_at(distance: float, radius: float, maximum: float) -> float:
 
 
 func _process(delta: float) -> void:
+	if not _effects.is_empty():
+		queue_redraw()
 	for index in range(_effects.size() - 1, -1, -1):
 		_effects[index]["time"] -= delta
 		if _effects[index]["time"] <= 0.0:
 			_effects.remove_at(index)
-	if not _effects.is_empty():
-		queue_redraw()
 
 
 func _draw() -> void:
 	for effect in _effects:
 		var fraction: float = 1.0 - effect["time"] / EFFECT_DURATION
 		var center: Vector2 = to_local(effect["center"])
-		draw_circle(center, effect["radius"] * fraction * 0.6, Color(1.0, 0.62, 0.24, 0.23 * (1.0 - fraction)))
-		draw_arc(center, effect["radius"] * fraction, 0.0, TAU, 48, Color(1.0, 0.88, 0.54, 0.8 * (1.0 - fraction)), 4.0)
+		var radius: float = effect["radius"]
+		for i in 7:
+			var angle := i * TAU / 7.0
+			var puff := center + Vector2.from_angle(angle) * radius * fraction * 0.48
+			draw_circle(puff, radius * (0.12 + fraction * 0.16), Color(0.74, 0.66, 0.46, 0.12 * (1.0 - fraction)))
+		draw_circle(center, radius * fraction * 0.5, Color(1.0, 0.7, 0.32, 0.3 * (1.0 - fraction)))
+		draw_circle(center, radius * 0.2 * (1.0 - fraction), Color(1.0, 0.93, 0.68, 0.65 * (1.0 - fraction)))
+		draw_arc(center, radius * sqrt(fraction), 0.0, TAU, 48, Color(0.94, 0.88, 0.64, 0.6 * (1.0 - fraction)), 2.0, true)

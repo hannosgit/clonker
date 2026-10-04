@@ -5,6 +5,7 @@ signal terrain_changed(changed_cells: Array[Vector2i])
 
 const CELL_SIZE := 8
 const CHUNK_SIZE := 32
+const TEXELS_PER_CELL := 4
 const WIDTH := 288
 const HEIGHT := 144
 const ORIGIN := Vector2i(-800, -384)
@@ -17,6 +18,7 @@ var rebuild_count := 0
 var last_rebuild_us := 0
 var total_rebuild_us := 0
 var _scheduled := false
+var _visual_tiles: Dictionary = {}
 
 
 func _ready() -> void:
@@ -158,7 +160,7 @@ func _rebuild_chunk(key: Vector2i) -> void:
 	for child in body.get_children():
 		body.remove_child(child)
 		child.queue_free()
-	var image := Image.create(CHUNK_SIZE, CHUNK_SIZE, false, Image.FORMAT_RGBA8)
+	var image := Image.create(CHUNK_SIZE * TEXELS_PER_CELL, CHUNK_SIZE * TEXELS_PER_CELL, false, Image.FORMAT_RGBA8)
 	var active: Dictionary = {}
 	for y in CHUNK_SIZE:
 		var next: Dictionary = {}
@@ -166,7 +168,6 @@ func _rebuild_chunk(key: Vector2i) -> void:
 		while x < CHUNK_SIZE:
 			var cell := key * CHUNK_SIZE + Vector2i(x, y)
 			var id := get_cell_material(cell)
-			image.set_pixel(x, y, Materials.color_for(id))
 			if not Materials.is_solid(id):
 				x += 1
 				continue
@@ -176,7 +177,7 @@ func _rebuild_chunk(key: Vector2i) -> void:
 				id = get_cell_material(cell)
 				if not Materials.is_solid(id):
 					break
-				image.set_pixel(x, y, Materials.color_for(id))
+				_paint_cell(image, Vector2i(x, y), cell, id)
 				x += 1
 			var run := Vector2i(begin, x - begin)
 			if active.has(run):
@@ -193,7 +194,53 @@ func _rebuild_chunk(key: Vector2i) -> void:
 		_add_rect(body, active[run])
 	var sprite: Sprite2D = node.get_node("Texture")
 	sprite.texture = ImageTexture.create_from_image(image)
-	sprite.scale = Vector2.ONE * CELL_SIZE
+	sprite.scale = Vector2.ONE * (float(CELL_SIZE) / TEXELS_PER_CELL)
+
+
+func _paint_cell(image: Image, pixel_cell: Vector2i, cell: Vector2i, id: int) -> void:
+	var above_open := not Materials.is_solid(get_cell_material(cell + Vector2i.UP))
+	var side_open := not Materials.is_solid(get_cell_material(cell + Vector2i.LEFT)) or not Materials.is_solid(get_cell_material(cell + Vector2i.RIGHT))
+	var turf := id == Materials.EARTH and above_open and (ORIGIN.y + cell.y * CELL_SIZE) <= 352
+	var variant := _texture_hash(cell.x / 3, cell.y / 2) % 16
+	var rock_row := posmod(cell.y, 9) if id == Materials.ROCK else 0
+	var tile_key := Vector4i(id, variant, int(above_open) + int(side_open) * 2 + int(turf) * 4, rock_row)
+	var tile: Image = _visual_tiles.get(tile_key)
+	if tile == null:
+		tile = _make_visual_tile(id, variant, rock_row, above_open, side_open, turf)
+		_visual_tiles[tile_key] = tile
+	image.blit_rect(tile, Rect2i(0, 0, TEXELS_PER_CELL, TEXELS_PER_CELL), pixel_cell * TEXELS_PER_CELL)
+
+
+func _make_visual_tile(id: int, variant: int, rock_row: int, above_open: bool, side_open: bool, turf: bool) -> Image:
+	var tile := Image.create(TEXELS_PER_CELL, TEXELS_PER_CELL, false, Image.FORMAT_RGBA8)
+	var base := Materials.color_for(id)
+	# Cached small tiles keep excavation responsive while retaining stable variation.
+	var variation := (float(variant) / 15.0 - 0.5) * 0.1
+	base = base.lightened(variation) if variation > 0 else base.darkened(-variation)
+	for py in TEXELS_PER_CELL:
+		for px in TEXELS_PER_CELL:
+			var noise_hash := _texture_hash(variant * 4 + px, id * 4 + py) % 97
+			var color := base
+			if noise_hash < 2: color = base.darkened(0.12)
+			elif noise_hash > 94: color = base.lightened(0.09)
+			if id == Materials.ROCK and (rock_row * 4 + py) % 9 == 0:
+				color = base.darkened(0.13)
+			if id == Materials.EARTH and noise_hash < 3:
+				color = Color("ad8c60")
+			if id in [Materials.COAL, Materials.ORE, Materials.GOLD] and noise_hash > 73:
+				color = Color("536767") if id == Materials.COAL else (Color("d89a6b") if id == Materials.ORE else Color("e6c575"))
+			if above_open and py == 0: color = base.lightened(0.18)
+			if side_open and px == 0: color = color.darkened(0.13)
+			if turf and py < 2:
+				color = Color("8b9e63") if py == 0 else Color("607c50")
+			tile.set_pixel(px, py, color)
+	return tile
+
+
+func _texture_hash(x: int, y: int) -> int:
+	var value := (x * 374761393 + y * 668265263) & 0x7fffffff
+	value = ((value ^ (value >> 13)) * 1274126177) & 0x7fffffff
+	return value ^ (value >> 16)
 
 
 func _add_rect(body: StaticBody2D, rect: Rect2i) -> void:

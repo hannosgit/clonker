@@ -236,6 +236,12 @@ func _draw() -> void:
 	var data := Catalog.get_definition(selected_id)
 	var size := Vector2(float(data["size"][0]), float(data["size"][1]))
 	var rect := Rect2(_preview_position - Vector2(size.x * 0.5, size.y), size)
-	var color := Color(0.3, 0.9, 0.5, 0.45) if _preview_reason.is_empty() else Color(1.0, 0.25, 0.2, 0.5)
-	draw_rect(rect, color)
-	draw_rect(rect, color.lightened(0.2), false, 2.0)
+	var color := Color("bddca0") if _preview_reason.is_empty() else Color("e8a182")
+	draw_rect(rect, Color(color, 0.14))
+	# Corner brackets and a support line keep the terrain visible under the preview.
+	for corner: Vector2 in [rect.position, rect.position + Vector2(size.x, 0), rect.end, rect.position + Vector2(0, size.y)]:
+		var direction := (rect.get_center() - corner).sign()
+		draw_line(corner, corner + Vector2(direction.x * 9, 0), color, 2.0, true)
+		draw_line(corner, corner + Vector2(0, direction.y * 9), color, 2.0, true)
+	draw_line(rect.position + Vector2(0, size.y), rect.end, color, 2.0, true)
+	draw_colored_polygon(PackedVector2Array([rect.position + Vector2(4, 14), rect.position + Vector2(size.x * 0.5, 2), rect.position + Vector2(size.x - 4, 14)]), Color(color, 0.3))

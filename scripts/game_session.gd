@@ -77,6 +77,8 @@ func _use_selected_tool(target: Vector2) -> Dictionary:
 		return {}
 	_character.tool_cooldown = float(tool["cooldown"])
 	var removed: Dictionary = MiningAction.execute(_world, _character.global_position, target, tool)
+	if not removed.is_empty():
+		$Feedback.emit_chips(target)
 	for material in removed:
 		var material_definition: Dictionary = Materials.get_definition(material)
 		if material_definition.has("yield_item"):

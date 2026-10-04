@@ -12,7 +12,8 @@ const MAX_ACTIVE_PER_STEP := 512
 const MAX_STEPS_PER_FRAME := 2
 const CELL_CAPACITY := 255
 const DISPLACEMENT_SEARCH_LIMIT := 512
-const WATER_COLOR := Color(0.13, 0.48, 0.83, 0.72)
+const WATER_COLOR := Color(0.22, 0.56, 0.57, 0.85)
+const WaterShader = preload("res://assets/water.gdshader")
 const Materials = preload("res://scripts/material_catalog.gd")
 
 @onready var world: SandboxWorld = get_parent().get_node("World")
@@ -29,9 +30,12 @@ var _queued: Dictionary = {}
 var _dirty_chunks: Dictionary = {}
 var _chunk_sprites: Dictionary = {}
 var _accumulator := 0.0
+var _water_material: ShaderMaterial
 
 
 func _ready() -> void:
+	_water_material = ShaderMaterial.new()
+	_water_material.shader = WaterShader
 	amounts.resize(world.WIDTH * world.HEIGHT)
 	liquid_types.resize(world.WIDTH * world.HEIGHT)
 	world.terrain_changed.connect(_on_terrain_changed)
@@ -186,6 +190,8 @@ func _write(cell: Vector2i, amount: int) -> void:
 	amounts[index] = amount
 	liquid_types[index] = LiquidType.WATER if amount > 0 else LiquidType.NONE
 	_dirty_chunks[Vector2i(cell.x / world.CHUNK_SIZE, cell.y / world.CHUNK_SIZE)] = true
+	if cell.y % world.CHUNK_SIZE == world.CHUNK_SIZE - 1:
+		_dirty_chunks[Vector2i(cell.x / world.CHUNK_SIZE, cell.y / world.CHUNK_SIZE + 1)] = true
 
 
 func _index(cell: Vector2i) -> int:
@@ -266,6 +272,7 @@ func _flush_visuals() -> void:
 			sprite = Sprite2D.new()
 			sprite.centered = false
 			sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+			sprite.material = _water_material
 			sprite.position = Vector2(world.ORIGIN + chunk * world.CHUNK_SIZE * world.CELL_SIZE)
 			sprite.scale = Vector2.ONE * world.CELL_SIZE
 			add_child(sprite)
@@ -277,6 +284,11 @@ func _flush_visuals() -> void:
 				var amount := get_amount(cell)
 				if amount > 0:
 					var color := WATER_COLOR
+					if get_amount(cell + Vector2i.UP) == 0:
+						color = Color(0.55, 0.77, 0.68, 0.88)
+					else:
+						var depth := maxf(0.0, float(world.ORIGIN.y + cell.y * world.CELL_SIZE) - 360.0)
+						color = color.darkened(minf(0.16, depth * 0.0007))
 					color.a *= float(amount) / CELL_CAPACITY
 					image.set_pixel(x, y, color)
 		sprite.texture = ImageTexture.create_from_image(image)
